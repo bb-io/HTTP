@@ -1,0 +1,167 @@
+﻿using Apps.HTTP.Models;
+using Apps.HTTP.Models.Requests;
+using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Microsoft.AspNetCore.WebUtilities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RestSharp;
+
+namespace Apps.HTTP;
+
+[ActionList]
+public class Actions : BaseInvocable
+{
+    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
+        InvocationContext.AuthenticationCredentialsProviders;
+
+    public Actions(InvocationContext invocationContext) : base(invocationContext) { }
+    
+    [Action("Get", Description = "Perform a GET request to the specified endpoint.")]
+    public async Task<ResponseDto> Get([ActionParameter] GetRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.QueryParameters, "Query parameters");
+
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        if (input.QueryParameters != null)
+        { 
+            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        }
+
+        var request = new HttpRequest(endpoint, Method.Get, Creds);
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new ResponseDto(response);
+    }
+    
+    [Action("Post", Description = "Perform a POST request to the specified endpoint.")]
+    public async Task<ResponseDto> Post([ActionParameter] PostRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.Body, "Request body");
+        
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        var request = new HttpRequest(endpoint, Method.Post, Creds);
+        request.AddJsonBody(input.Body);
+        
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+    
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new ResponseDto(response);
+    }
+    
+    [Action("Put", Description = "Perform a PUT request to the specified endpoint.")]
+    public async Task<ResponseDto> Put([ActionParameter] PutRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.QueryParameters, "Query parameters");
+        CheckIfValidJson(input.Body, "Request body");
+        
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        if (input.QueryParameters != null)
+        { 
+            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        }
+        
+        var request = new HttpRequest(endpoint, Method.Put, Creds);
+        request.AddJsonBody(input.Body);
+        
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+    
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new ResponseDto(response);
+    }
+    
+    [Action("Patch", Description = "Perform a PATCH request to the specified endpoint.")]
+    public async Task<ResponseDto> Patch([ActionParameter] PatchRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.QueryParameters, "Query parameters");
+        CheckIfValidJson(input.Body, "Request body");
+        
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        if (input.QueryParameters != null)
+        { 
+            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        }
+        
+        var request = new HttpRequest(endpoint, Method.Patch, Creds);
+        request.AddJsonBody(input.Body);
+        
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new ResponseDto(response);
+    }
+    
+    [Action("Delete", Description = "Perform a DELETE request to the specified endpoint.")]
+    public async Task<ResponseDto> Delete([ActionParameter] DeleteRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.QueryParameters, "Query parameters");
+
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        if (input.QueryParameters != null)
+        { 
+            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        }
+        
+        var request = new HttpRequest(endpoint, Method.Delete, Creds);
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+    
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new ResponseDto(response);
+    }
+    
+    private static Dictionary<string, TValue> ConvertToDictionary<TValue>(string json) 
+        => JsonConvert.DeserializeObject<Dictionary<string, TValue>>(json);
+    
+    private static void CheckIfValidJson(string? json, string parameterName)
+    {
+        if (json == null)
+            return; 
+        
+        try
+        {
+            JObject.Parse(json);
+        }
+        catch (JsonReaderException)
+        {
+            throw new Exception($"{parameterName} must be in JSON format. Example of valid JSON: " + 
+                                "{ \"key\": \"value\", \"key2\": \"value2\" }");
+        }
+    }
+}

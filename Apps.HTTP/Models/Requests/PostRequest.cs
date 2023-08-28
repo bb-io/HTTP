@@ -4,6 +4,11 @@ namespace Apps.HTTP.Models.Requests;
 
 public class PostRequest : Request
 {
-    [Display("Request body in JSON format")]
-    public string Body { get; set; }
+    private readonly string _body;
+    
+    [Display("Is request body in JSON format")]
+    public bool IsBodyInJsonFormat { get; init; }
+    
+    [Display("Request body")]
+    public string Body { get => _body; init => _body = ReplaceBrackets(value)!; }
 }

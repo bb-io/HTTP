@@ -48,7 +48,8 @@ public class Actions : BaseInvocable
     public async Task<ResponseDto> Post([ActionParameter] PostRequest input)
     {
         CheckIfValidJson(input.Headers, "Headers");
-        CheckIfValidJson(input.Body, "Request body");
+        if (input.IsBodyInJsonFormat) 
+            CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
         var endpoint = input.Endpoint.Trim('/');
@@ -70,7 +71,8 @@ public class Actions : BaseInvocable
     {
         CheckIfValidJson(input.Headers, "Headers");
         CheckIfValidJson(input.QueryParameters, "Query parameters");
-        CheckIfValidJson(input.Body, "Request body");
+        if (input.IsBodyInJsonFormat) 
+            CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
         var endpoint = input.Endpoint.Trim('/');
@@ -98,7 +100,8 @@ public class Actions : BaseInvocable
     {
         CheckIfValidJson(input.Headers, "Headers");
         CheckIfValidJson(input.QueryParameters, "Query parameters");
-        CheckIfValidJson(input.Body, "Request body");
+        if (input.IsBodyInJsonFormat) 
+            CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
         var endpoint = input.Endpoint.Trim('/');

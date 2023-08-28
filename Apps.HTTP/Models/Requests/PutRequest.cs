@@ -4,9 +4,11 @@ namespace Apps.HTTP.Models.Requests;
 
 public class PutRequest : Request
 {
-    [Display("Request body in JSON format")]
-    public string Body { get; set; }
+    private readonly string _body;
+
+    [Display("Is request body in JSON format")]
+    public bool IsBodyInJsonFormat { get; init; }
     
-    [Display("Query parameters in JSON format")]
-    public string? QueryParameters { get; set; }
+    [Display("Request body")]
+    public string Body { get => _body; init => _body = ReplaceBrackets(value)!; }
 }

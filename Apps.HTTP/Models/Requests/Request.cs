@@ -15,5 +15,5 @@ public abstract class Request
     [Display("Query parameters in JSON format")]
     public string? QueryParameters { get => _queryParameters; init => _queryParameters = ReplaceBrackets(value)!; }
 
-    protected static string? ReplaceBrackets(string? value) => value?.Replace("“", "\"");
+    protected static string? ReplaceBrackets(string? value) => value?.Replace("“", "\"").Replace("”", "\"");
 }

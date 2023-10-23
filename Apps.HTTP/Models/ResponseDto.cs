@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using System.Net.Mime;
+using Blackbird.Applications.Sdk.Common;
 using RestSharp;
 using File = Blackbird.Applications.Sdk.Common.Files.File;
 
@@ -13,12 +14,17 @@ public class ResponseDto
         ContentType = response.ContentType;
         
         Headers = response.Headers?
+            .DistinctBy(x => x.Name)
             .Where(x => !string.IsNullOrWhiteSpace(x.Name))
             .ToDictionary(x => x.Name!, x => x.Value?.ToString());
+        
+        var contentDisposition = response.ContentHeaders.FirstOrDefault(header => header.Name == "Content-Disposition");
         ContentFile = new(response.RawBytes)
         {
-            ContentType = response.Headers?
-                .FirstOrDefault(x => x.Name == "Content-Type")?.Value?.ToString() ?? string.Empty
+            Name = contentDisposition != null && contentDisposition.Value.ToString().Contains("attachment;") ? 
+                contentDisposition.Value.ToString().Split('"')[1] : Guid.NewGuid().ToString(),
+            ContentType = response.ContentHeaders?
+                .FirstOrDefault(x => x.Name == "Content-Type")?.Value?.ToString() ?? MediaTypeNames.Application.Octet
         };
     }
 

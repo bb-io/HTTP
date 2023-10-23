@@ -4,10 +4,12 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Product>Blackbird HTTP</Product>
+        <Version>1.0.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.1.0" />
+      <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha4" />
       <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.3" />
       <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
     </ItemGroup>

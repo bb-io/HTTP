@@ -1,5 +1,5 @@
-﻿using Apps.HTTP.Models;
-using Apps.HTTP.Models.Requests;
+﻿using Apps.HTTP.Models.Requests;
+using Apps.HTTP.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -42,6 +42,31 @@ public class Actions : BaseInvocable
 
         var response = await client.ExecuteWithErrorHandling(request);
         return new ResponseDto(response);
+    }
+    
+    [Action("Get file", Description = "Perform a GET request to the specified endpoint to download a file.")]
+    public async Task<FileResponseDto> GetFile([ActionParameter] GetRequest input)
+    {
+        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidJson(input.QueryParameters, "Query parameters");
+
+        var client = new HttpClient(Creds);
+        var endpoint = input.Endpoint.Trim('/');
+        if (input.QueryParameters != null)
+        { 
+            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        }
+
+        var request = new HttpRequest(endpoint, Method.Get, Creds);
+        if (input.Headers != null)
+        {
+            var headers = ConvertToDictionary<string>(input.Headers);
+            request.AddHeaders(headers);
+        }
+
+        var response = await client.ExecuteWithErrorHandling(request);
+        return new FileResponseDto(response);
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]

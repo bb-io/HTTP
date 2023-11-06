@@ -1,21 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-		<Product>HTTP</Product>
-		<Version>1.0.1</Version>
-		<Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
-		<AssemblyName>Apps.HTTP</AssemblyName>
-    </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha4" />
-      <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.3" />
-      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
-    </ItemGroup>
-    <ItemGroup>
-        <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png"/>
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Product>HTTP</Product>
+    <Version>1.0.2</Version>
+    <Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
+    <AssemblyName>Apps.HTTP</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha4" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
+  </ItemGroup>
 </Project>

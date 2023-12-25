@@ -4,6 +4,7 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,10 +15,16 @@ namespace Apps.HTTP;
 [ActionList]
 public class Actions : BaseInvocable
 {
+    private readonly IFileManagementClient _fileManagementClient;
+
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
 
-    public Actions(InvocationContext invocationContext) : base(invocationContext) { }
+    public Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+        : base(invocationContext)
+    {
+        _fileManagementClient = fileManagementClient;
+    }
     
     [Action("Get", Description = "Perform a GET request to the specified endpoint.")]
     public async Task<ResponseDto> Get([ActionParameter] GetRequest input)
@@ -66,7 +73,7 @@ public class Actions : BaseInvocable
         }
 
         var response = await client.ExecuteWithErrorHandling(request);
-        return new FileResponseDto(response);
+        return new FileResponseDto(response, _fileManagementClient);
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]

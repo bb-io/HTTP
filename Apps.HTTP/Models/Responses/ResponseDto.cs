@@ -1,7 +1,5 @@
-﻿using System.Net.Mime;
-using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common;
 using RestSharp;
-using File = Blackbird.Applications.Sdk.Common.Files.File;
 
 namespace Apps.HTTP.Models.Responses;
 

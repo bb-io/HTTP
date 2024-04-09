@@ -10,7 +10,7 @@ public class HttpApplication : IApplication, ICategoryProvider
         get => [ApplicationCategory.Utilities];
         set { }
     }
-    
+
     public string Name
     {
         get => "HTTP Application";

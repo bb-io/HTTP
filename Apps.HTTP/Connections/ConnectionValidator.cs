@@ -11,7 +11,7 @@ public class ConnectionValidator : IConnectionValidator
         CancellationToken cancellationToken)
     {
         var client = new HttpClient(authenticationCredentialsProviders);
-        var request = new HttpRequest("", Method.Get, authenticationCredentialsProviders);
+        var request = new HttpRequest(authenticationCredentialsProviders.First(p => p.KeyName == "Base URL").Value, Method.Get, authenticationCredentialsProviders);
 
         try
         {

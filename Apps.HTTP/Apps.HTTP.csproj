@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <Product>HTTP</Product>
     <Version>1.0.7</Version>
+
     <Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
     <AssemblyName>Apps.HTTP</AssemblyName>
   </PropertyGroup>

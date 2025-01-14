@@ -19,13 +19,6 @@ public class HttpClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        if (response.Content != null && response.Content.Any())
-        {
-            return new PluginMisconfigurationException($"There was a configuration issue. Details: {response.Content}");
-        }
-        else
-        {
-            return new PluginApplicationException("Please ensure the request was correct");
-        }
+           return new PluginApplicationException();
     }
 }

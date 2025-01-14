@@ -19,6 +19,6 @@ public class HttpClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-           return new PluginApplicationException();
+           return new PluginApplicationException(response.Content);
     }
 }

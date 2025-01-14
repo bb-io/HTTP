@@ -1,4 +1,5 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using RestSharp;
 
@@ -18,6 +19,13 @@ public class HttpClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        return new(response.Content);
+        if (response.Content != null && response.Content.Any())
+        {
+            return new PluginMisconfigurationException($"There was a configuration issue. Details: {response.Content}");
+        }
+        else
+        {
+            return new PluginApplicationException("Please ensure the request was correct");
+        }
     }
 }

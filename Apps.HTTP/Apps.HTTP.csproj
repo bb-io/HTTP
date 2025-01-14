@@ -4,12 +4,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>HTTP</Product>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
+
     <Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
     <AssemblyName>Apps.HTTP</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.6.0" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.3" />
   </ItemGroup>

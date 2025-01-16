@@ -3,6 +3,7 @@ using Apps.HTTP.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
@@ -195,7 +196,7 @@ public class Actions : BaseInvocable
         }
         catch (JsonReaderException)
         {
-            throw new Exception($"{parameterName} must be in JSON format. Example of valid JSON: " + 
+            throw new PluginMisconfigurationException($"{parameterName} must be in JSON format. Example of valid JSON: " + 
                                 "{ \"key\": \"value\", \"key2\": \"value2\" }");
         }
     }

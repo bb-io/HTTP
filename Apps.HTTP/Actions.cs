@@ -34,7 +34,7 @@ public class Actions : BaseInvocable
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -59,7 +59,7 @@ public class Actions : BaseInvocable
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -85,7 +85,7 @@ public class Actions : BaseInvocable
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         var request = new HttpRequest(endpoint, Method.Post, Creds);
         request.AddJsonBody(input.Body);
         
@@ -108,7 +108,7 @@ public class Actions : BaseInvocable
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -137,7 +137,7 @@ public class Actions : BaseInvocable
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -164,7 +164,7 @@ public class Actions : BaseInvocable
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
-        var endpoint = input.Endpoint.Trim('/') + "/";
+        var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);

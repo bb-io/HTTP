@@ -17,7 +17,8 @@ public class ConnectionValidator : IConnectionValidator
         var client = new HttpClient(credentialsProviders);
         
         var baseUrl = credentialsProviders.Get(CredNames.BaseUrl).Value;
-        var request = new HttpRequest(baseUrl, Method.Get, credentialsProviders);
+        var leftPart = new Uri(baseUrl).GetLeftPart(UriPartial.Authority);
+        var request = new HttpRequest(leftPart, Method.Get, credentialsProviders);
 
         try
         {

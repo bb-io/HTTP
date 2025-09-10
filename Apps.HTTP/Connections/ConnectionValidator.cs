@@ -1,5 +1,7 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.HTTP.Constants;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using RestSharp;
 
 namespace Apps.HTTP.Connections;
@@ -10,8 +12,12 @@ public class ConnectionValidator : IConnectionValidator
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders, 
         CancellationToken cancellationToken)
     {
-        var client = new HttpClient(authenticationCredentialsProviders);
-        var request = new HttpRequest(authenticationCredentialsProviders.First(p => p.KeyName == "Base URL").Value, Method.Get, authenticationCredentialsProviders);
+        var credentialsProviders = authenticationCredentialsProviders as AuthenticationCredentialsProvider[] ?? authenticationCredentialsProviders.ToArray();
+        
+        var client = new HttpClient(credentialsProviders);
+        
+        var baseUrl = credentialsProviders.Get(CredNames.BaseUrl).Value;
+        var request = new HttpRequest(baseUrl, Method.Get, credentialsProviders);
 
         try
         {

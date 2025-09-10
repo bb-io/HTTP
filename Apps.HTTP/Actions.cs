@@ -14,19 +14,12 @@ using RestSharp;
 namespace Apps.HTTP;
 
 [ActionList]
-public class Actions : BaseInvocable
+public class Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : BaseInvocable(invocationContext)
 {
-    private readonly IFileManagementClient _fileManagementClient;
-
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
 
-    public Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-        : base(invocationContext)
-    {
-        _fileManagementClient = fileManagementClient;
-    }
-    
     [Action("Get", Description = "Perform a GET request to the specified endpoint.")]
     public async Task<ResponseDto> Get([ActionParameter] GetRequest input)
     {
@@ -74,7 +67,7 @@ public class Actions : BaseInvocable
         }
 
         var response = await client.ExecuteWithErrorHandling(request);
-        return new FileResponseDto(response, _fileManagementClient);
+        return new FileResponseDto(response, fileManagementClient);
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]
@@ -86,15 +79,15 @@ public class Actions : BaseInvocable
         
         var client = new HttpClient(Creds);
         var endpoint = "/" + input.Endpoint.Trim('/');
-        var request = new HttpRequest(endpoint, Method.Post, Creds);
-        request.AddJsonBody(input.Body);
+        var request = new HttpRequest(endpoint, Method.Post, Creds)
+            .AddJsonBody(input.Body);
         
         if (input.Headers != null)
         {
             var headers = ConvertToDictionary<string>(input.Headers);
             request.AddHeaders(headers);
         }
-    
+        
         var response = await client.ExecuteWithErrorHandling(request);
         return new ResponseDto(response);
     }

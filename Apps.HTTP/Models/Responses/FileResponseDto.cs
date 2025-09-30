@@ -26,14 +26,14 @@ public class FileResponseDto : ResponseDto
 
     private static string GetContentType(string? contentTypeHeader)
     {
-        if (!string.IsNullOrEmpty(contentTypeHeader))
+        if (!string.IsNullOrWhiteSpace(contentTypeHeader))
         {
-            return contentTypeHeader.Split(';')[0].Trim();
+            var parts = contentTypeHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length > 0)
+                return parts[0].Trim();
         }
-        else
-        {
-            return MediaTypeNames.Application.Octet;
-        }
+
+        return MediaTypeNames.Application.Octet;
     }
 
     private static string GetFileName(string? contentDispositionHeader)

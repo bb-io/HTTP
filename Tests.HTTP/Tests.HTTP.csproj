@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <Folder Include="TestFiles\" />
+    <Folder Include="TestFiles\Output\" />
   </ItemGroup>
 
 </Project>

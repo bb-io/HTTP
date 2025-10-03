@@ -5,6 +5,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
@@ -79,15 +80,26 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         
         var client = new HttpClient(Creds);
         var endpoint = "/" + input.Endpoint.Trim('/');
-        var request = new HttpRequest(endpoint, Method.Post, Creds)
-            .AddJsonBody(input.Body);
+        var request = new HttpRequest(endpoint, Method.Post, Creds).AddJsonBody(input.Body);
         
         if (input.Headers != null)
         {
             var headers = ConvertToDictionary<string>(input.Headers);
             request.AddHeaders(headers);
         }
-        
+
+        if (input.File != null)
+        {
+            var file = await fileManagementClient.DownloadAsync(input.File);
+            var fileBytes = await file.GetByteData();
+            request.AddFile(
+                name: string.IsNullOrEmpty(input.FieldName) ? "file" : input.FieldName,
+                bytes: fileBytes,
+                fileName: input.File.Name,
+                contentType: input.File.ContentType
+            );
+        }
+
         var response = await client.ExecuteWithErrorHandling(request);
         return new ResponseDto(response);
     }

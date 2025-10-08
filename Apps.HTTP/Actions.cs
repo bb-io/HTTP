@@ -14,7 +14,7 @@ using RestSharp;
 
 namespace Apps.HTTP;
 
-[ActionList]
+[ActionList("HTTP actions")]
 public class Actions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : BaseInvocable(invocationContext)
 {

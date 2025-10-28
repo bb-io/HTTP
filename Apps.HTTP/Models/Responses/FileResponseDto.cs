@@ -59,7 +59,7 @@ public class FileResponseDto : ResponseDto
         if (parts.Length == 2)
         {
             var ext = parts[1].Trim();
-            if (!fileName.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase))
+            if (!fileName.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase) && ext.ToLower() != "octet-stream")
                 fileName += "." + ext;
         }
 

@@ -58,7 +58,7 @@ public class WebhookEvents(InvocationContext invocationContext) : BaseInvocable(
             {
                 Body = webhookBody
             },
-            ReceivedWebhookRequestType = WebhookRequestType.Preflight
+            ReceivedWebhookRequestType = WebhookRequestType.Default
         };
         
         return Task.FromResult(finalResponse);

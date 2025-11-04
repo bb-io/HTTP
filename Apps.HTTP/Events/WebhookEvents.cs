@@ -81,6 +81,7 @@ public class WebhookEvents(InvocationContext invocationContext) : BaseInvocable(
             var queryParams = webhookRequest.QueryParameters
                 .Select(kv => $"{kv.Key}={kv.Value}")
                 .ToList();
+                
             requestBody += queryParams.Any() ? $"?{string.Join("&", queryParams)}" : string.Empty;
         }
         

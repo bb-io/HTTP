@@ -4,6 +4,6 @@ namespace Apps.HTTP.Models.Responses;
 
 public class RequestReceivedResponse
 {
-    [Display("Body")]
+    [Display("Body or query parameters")]
     public string Body { get; set; } = string.Empty;
 }

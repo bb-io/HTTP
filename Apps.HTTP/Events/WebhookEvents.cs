@@ -13,54 +13,77 @@ public class WebhookEvents(InvocationContext invocationContext) : BaseInvocable(
     public Task<WebhookResponse<RequestReceivedResponse>> OnRequestReceived(WebhookRequest webhookRequest,
         [WebhookParameter] AuthorizationRequest authorizationRequest)
     {
-        var authHeader = webhookRequest.Headers?
-            .FirstOrDefault(h => h.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase)).Value;
-        if (!string.IsNullOrEmpty(authorizationRequest.AuthorizationHeaderValue))
+        var unauthorizedResponse = ValidateAuthorization(webhookRequest, authorizationRequest);
+        if (unauthorizedResponse != null)
         {
-            if (authHeader != authorizationRequest.AuthorizationHeaderValue)
-            {
-                var unauthorizedJson = "{ \"message\": \"unauthorized\" }";
-                return Task.FromResult(new WebhookResponse<RequestReceivedResponse>
-                {
-                    HttpResponseMessage = new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        Content = new StringContent(unauthorizedJson)
-                    },
-                    Result = new RequestReceivedResponse
-                    {
-                        Body = "Unauthorized"
-                    },
-                    ReceivedWebhookRequestType = WebhookRequestType.Preflight
-                });
-            }
+            return Task.FromResult(unauthorizedResponse);
         }
-        
-        var httpResponseMessage = new HttpResponseMessage
+
+        var successResponse = new HttpResponseMessage
         {
             Content = new StringContent("Request received successfully")
         };
-
-        httpResponseMessage.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
+        successResponse.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("text/plain");
         
-        var webhookBody = webhookRequest.Body.ToString() ?? string.Empty;
+        var requestBody = BuildRequestBody(webhookRequest);
+        
+        var webhookResponse = new WebhookResponse<RequestReceivedResponse>
+        {
+            HttpResponseMessage = successResponse,
+            Result = new RequestReceivedResponse
+            {
+                Body = requestBody
+            },
+            ReceivedWebhookRequestType = WebhookRequestType.Default
+        };
+        
+        return Task.FromResult(webhookResponse);
+    }
+
+    private WebhookResponse<RequestReceivedResponse>? ValidateAuthorization(
+        WebhookRequest webhookRequest, 
+        AuthorizationRequest authorizationRequest)
+    {
+        if (string.IsNullOrEmpty(authorizationRequest.AuthorizationHeaderValue))
+        {
+            return null;
+        }
+
+        var receivedAuthHeader = webhookRequest.Headers?
+            .FirstOrDefault(h => h.Key.Equals("Authorization", StringComparison.OrdinalIgnoreCase)).Value;
+
+        if (receivedAuthHeader == authorizationRequest.AuthorizationHeaderValue)
+        {
+            return null;
+        }
+
+        var errorJson = "{ \"message\": \"unauthorized\" }";
+        var unauthorizedHttpResponse = new HttpResponseMessage(System.Net.HttpStatusCode.Unauthorized)
+        {
+            Content = new StringContent(errorJson)
+        };
+        
+        unauthorizedHttpResponse.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        return new WebhookResponse<RequestReceivedResponse>
+        {
+            HttpResponseMessage = unauthorizedHttpResponse,
+            Result = new RequestReceivedResponse(),
+            ReceivedWebhookRequestType = WebhookRequestType.Preflight
+        };
+    }
+
+    private string BuildRequestBody(WebhookRequest webhookRequest)
+    {
+        var requestBody = webhookRequest.Body.ToString() ?? string.Empty;
+        
         if (webhookRequest.HttpMethod == HttpMethod.Get)
         {
             var queryParams = webhookRequest.QueryParameters
                 .Select(kv => $"{kv.Key}={kv.Value}")
                 .ToList();
-            webhookBody += queryParams.Any() ? $"?{string.Join("&", queryParams)}" : string.Empty;
+            requestBody += queryParams.Any() ? $"?{string.Join("&", queryParams)}" : string.Empty;
         }
         
-        var finalResponse = new WebhookResponse<RequestReceivedResponse>
-        {
-            HttpResponseMessage = httpResponseMessage,
-            Result = new RequestReceivedResponse
-            {
-                Body = webhookBody
-            },
-            ReceivedWebhookRequestType = WebhookRequestType.Default
-        };
-        
-        return Task.FromResult(finalResponse);
+        return requestBody;
     }
 }

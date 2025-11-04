@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>HTTP</Product>
-    <Version>1.0.16</Version>
+    <Version>1.0.17</Version>
 
     <Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
     <AssemblyName>Apps.HTTP</AssemblyName>

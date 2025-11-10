@@ -12,11 +12,20 @@ The HTTP application provides a set of HTTP actions to be used within Blackbird 
 ## Actions
 
 - **GET**: Executes an HTTP GET request with optional headers and query parameters.
-- **GET File**: Executes an HTTP GET request to download files, integrating with Blackbird�s file management system.
+- **GET File**: Executes an HTTP GET request to download files, integrating with Blackbird’s file management system.
 - **POST**: Executes an HTTP POST request with a JSON body. Supports file uploads.
 - **PUT**: Executes an HTTP PUT request with support for headers, query parameters, and a JSON body.
 - **PATCH**: Executes an HTTP PATCH request with support for headers, query parameters, and a JSON body.
 - **DELETE**: Executes an HTTP DELETE request with optional headers and query parameters.
+
+## Events
+
+- **Webhook — On request received**
+  - When a bird is published, a unique URL is generated. Requests to this URL trigger the flight.
+  - POST requests: the event returns the request body.
+  - GET requests: the event returns query parameters as a string (e.g. ?param1=value1&param2=value2).
+  - Authentication is mandatory: set a token in the event parameters and include the same value in the `Authorization` header of requests to the URL to avoid unauthorized triggers.
+  - Example header: Authorization: my-secret-token
 
 ## Use cases
 

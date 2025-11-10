@@ -12,7 +12,7 @@ The HTTP application provides a set of HTTP actions to be used within Blackbird 
 ## Actions
 
 - **GET**: Executes an HTTP GET request with optional headers and query parameters.
-- **GET File**: Executes an HTTP GET request to download files, integrating with Blackbird�s file management system.
+- **GET File**: Executes an HTTP GET request to download files, integrating with Blackbird’s file management system.
 - **POST**: Executes an HTTP POST request with a JSON body. Supports file uploads.
 - **PUT**: Executes an HTTP PUT request with support for headers, query parameters, and a JSON body.
 - **PATCH**: Executes an HTTP PATCH request with support for headers, query parameters, and a JSON body.

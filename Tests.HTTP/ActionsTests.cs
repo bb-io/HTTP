@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Apps.HTTP;
 using Apps.HTTP.Models.Requests;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Tests.HTTP.Base;
@@ -138,5 +139,26 @@ public class ActionsTests : TestBase
         Assert.IsNotNull(result.StatusCode);
 
         Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    [TestMethod]
+    public async Task Get_IncorrectHeaderJson_ThrowsMisconfigurationException()
+    {
+        // Arrange
+        var action = new Actions(InvocationContext, FileManager);
+        var json = "{ \"method\": \"GET\", \"headers\": { \"Content-Type\": \"application/json\", \"x-api-key\": \"\"} }";
+        var input = new GetRequest
+        {
+            Endpoint = "https://httpbin.org",
+            Headers = json
+        };
+
+        // Act
+        var ex = await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(async () => 
+            await action.Get(input)
+        );
+
+        // Assert
+        StringAssert.Contains(ex.Message, "Invalid headers JSON");
     }
 }

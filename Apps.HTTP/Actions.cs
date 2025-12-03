@@ -24,7 +24,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Get", Description = "Perform a GET request to the specified endpoint.")]
     public async Task<ResponseDto> Get([ActionParameter] GetRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
@@ -49,7 +49,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Get file", Description = "Perform a GET request to the specified endpoint to download a file.")]
     public async Task<FileResponseDto> GetFile([ActionParameter] GetRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
@@ -74,7 +74,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]
     public async Task<ResponseDto> Post([ActionParameter] PostRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         if (input.IsBodyInJsonFormat) 
             CheckIfValidJson(input.Body, "Request body");
         
@@ -107,7 +107,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Put", Description = "Perform a PUT request to the specified endpoint.")]
     public async Task<ResponseDto> Put([ActionParameter] PutRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
         if (input.IsBodyInJsonFormat) 
             CheckIfValidJson(input.Body, "Request body");
@@ -136,7 +136,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Patch", Description = "Perform a PATCH request to the specified endpoint.")]
     public async Task<ResponseDto> Patch([ActionParameter] PatchRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
         if (input.IsBodyInJsonFormat) 
             CheckIfValidJson(input.Body, "Request body");
@@ -165,7 +165,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     [Action("Delete", Description = "Perform a DELETE request to the specified endpoint.")]
     public async Task<ResponseDto> Delete([ActionParameter] DeleteRequest input)
     {
-        CheckIfValidJson(input.Headers, "Headers");
+        CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
@@ -203,6 +203,23 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         {
             throw new PluginMisconfigurationException($"{parameterName} must be in JSON format. Example of valid JSON: " + 
                                 "{ \"key\": \"value\", \"key2\": \"value2\" }");
+        }
+    }
+
+    private static void CheckIfValidHeaders(string? headers)
+    {
+        if (string.IsNullOrWhiteSpace(headers))
+            return;
+
+        try
+        {
+            ConvertToDictionary<string>(json: headers);
+        }
+        catch (JsonException)
+        {
+            throw new PluginMisconfigurationException(
+                "Invalid headers JSON. Please provide a flat JSON without nested objects"
+            );
         }
     }
 }

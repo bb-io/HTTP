@@ -9,6 +9,26 @@ Blackbird is the new automation backbone for the language technology industry. B
 
 The HTTP application provides a set of HTTP actions to be used within Blackbird workflows. It supports various HTTP methods, including GET, GET File, POST, PUT, PATCH, and DELETE. Each action allows you to configure custom headers, query parameters, and JSON payloads (when applicable). The actions include JSON validation to ensure that headers, query parameters, and request bodies are correctly formatted before executing the HTTP request.
 
+## Connecting
+
+1.Navigate to Apps and search for HTTP.
+2.Click _Add Connection_.
+3.Enter a name for your connection for future reference, e.g. “My HTTP connection”.
+4.Fill in the Base URL, the root URL of the API you want to call (for example https://api.example.com/v1).
+4.Click _Connect_.
+
+## How connection validation works
+
+When you click **Connect**, the platform runs a quick validation to confirm the host is reachable:
+
+- The app takes the **Base URL** you entered and extracts the **host (domain)** part  
+  (e.g. `https://api.example.com/v1` -> `api.example.com`).
+- It then performs a **DNS lookup** for that host.
+- If DNS resolves to at least one IP address, the connection is considered **valid**.
+- If DNS fails (invalid URL, unknown host, DNS error), the connection is marked **invalid** and you’ll see **“Ping failed”**.
+
+> **Note:** This validation does **not** require the base URL to return `200 OK`. Many APIs return `401/403/404` for `/`, so the HTTP app validates the connection by checking that the domain exists rather than requiring a successful API response.
+
 ## Actions
 
 - **GET**: Executes an HTTP GET request with optional headers and query parameters.

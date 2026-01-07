@@ -64,7 +64,7 @@ public class ConnectionValidator : IConnectionValidator
             return new ConnectionValidationResponse
             {
                 IsValid = false,
-                Message = "Ping failed"
+                Message = "Ping failed. No such host is known"
             };
         }
     }

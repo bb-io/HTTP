@@ -11,11 +11,11 @@ The HTTP application provides a set of HTTP actions to be used within Blackbird 
 
 ## Connecting
 
-1.Navigate to Apps and search for HTTP.
-2.Click _Add Connection_.
-3.Enter a name for your connection for future reference, e.g. “My HTTP connection”.
-4.Fill in the Base URL, the root URL of the API you want to call (for example https://api.example.com/v1).
-4.Click _Connect_.
+1. Navigate to Apps and search for HTTP.
+2. Click _Add Connection_.
+3. Enter a name for your connection for future reference, e.g. “My HTTP connection”.
+4. Fill in the Base URL, the root URL of the API you want to call (for example https://api.example.com/v1).
+4. Click _Connect_.
 
 ## How connection validation works
 

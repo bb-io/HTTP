@@ -13,10 +13,11 @@ public class ResponseDto
         Headers = response.Headers?
             .DistinctBy(x => x.Name)
             .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-            .ToDictionary(x => x.Name!, x => x.Value?.ToString());
+            .Select(x => new HeaderDto(x.Name!, x.Value?.ToString()))
+            .ToList() ?? new List<HeaderDto>();
     }
 
-    public Dictionary<string,string?>? Headers { get; set; }
+    public List<HeaderDto> Headers { get; set; }
 
     [Display("Status code")]
     public string StatusCode { get; set; }

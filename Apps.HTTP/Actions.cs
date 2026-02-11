@@ -193,17 +193,97 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     private static void CheckIfValidJson(string? json, string parameterName)
     {
         if (json == null)
-            return; 
-        
+            return;
+
+        if (string.IsNullOrWhiteSpace(json))
+            throw new PluginMisconfigurationException($"{parameterName} must be in JSON format. Example: {{ \"key\": \"value\" }}");
+
+        EnsureNoUnescapedControlCharsInsideStrings(json, parameterName);
+
         try
         {
-            JObject.Parse(json);
+            using var sr = new StringReader(json);
+            using var reader = new JsonTextReader(sr)
+            {
+                DateParseHandling = DateParseHandling.None,
+                FloatParseHandling = FloatParseHandling.Decimal,
+                MaxDepth = 128,
+                SupportMultipleContent = false,
+            };
+
+            var token = JToken.ReadFrom(reader);
+
+            if (token.Type != JTokenType.Object)
+                throw new PluginMisconfigurationException($"{parameterName} must be a JSON object. Example: {{ \"key\": \"value\" }}");
+
+            while (reader.Read())
+            {
+                if (reader.TokenType == JsonToken.Comment)
+                    throw new JsonReaderException("Comments are not allowed in JSON.");
+
+                if (reader.TokenType != JsonToken.None)
+                    throw new JsonReaderException("Additional content found after a valid JSON value.");
+            }
         }
-        catch (JsonReaderException)
+        catch (JsonReaderException ex)
         {
-            throw new PluginMisconfigurationException($"{parameterName} must be in JSON format. Example of valid JSON: " + 
-                                "{ \"key\": \"value\", \"key2\": \"value2\" }");
+            throw new PluginMisconfigurationException(
+                $"{parameterName} must be in JSON format. Error: {ex.Message}. Example: {{ \"key\": \"value\" }}");
         }
+    }
+
+    private static void EnsureNoUnescapedControlCharsInsideStrings(string json, string parameterName)
+    {
+        bool inString = false;
+        bool escaped = false;
+
+        for (int i = 0; i < json.Length; i++)
+        {
+            char c = json[i];
+
+            if (!inString)
+            {
+                if (c == '"')
+                    inString = true;
+
+                continue;
+            }
+
+            if (escaped)
+            {
+                escaped = false;
+                continue;
+            }
+
+            if (c == '\\')
+            {
+                escaped = true;
+                continue;
+            }
+
+            if (c == '"')
+            {
+                inString = false;
+                continue;
+            }
+
+            if (c < 0x20)
+            {
+                var shown = c switch
+                {
+                    '\r' => "\\r",
+                    '\n' => "\\n",
+                    '\t' => "\\t",
+                    _ => $"0x{(int)c:X2}"
+                };
+
+                throw new PluginMisconfigurationException(
+                    $"{parameterName} must be valid JSON. Unescaped control character {shown} found inside a string value.");
+            }
+        }
+
+        if (inString)
+            throw new PluginMisconfigurationException($"{parameterName} must be valid JSON. Unterminated string detected.");
     }
 
     private static void CheckIfValidHeaders(string? headers)

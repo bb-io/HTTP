@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>HTTP</Product>
-    <Version>1.0.21</Version>
+    <Version>1.0.22</Version>
 
     <Description>Perform basic HTTP requests (GET/POST/PUT/PATCH/DELETE)</Description>
     <AssemblyName>Apps.HTTP</AssemblyName>
@@ -16,5 +16,8 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DataHandlers\" />
   </ItemGroup>
 </Project>

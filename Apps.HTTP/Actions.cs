@@ -80,13 +80,15 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         
         var client = new HttpClient(Creds);
         var endpoint = "/" + input.Endpoint.Trim('/');
-        var request = new HttpRequest(endpoint, Method.Post, Creds).AddJsonBody(input.Body);
+        var request = new HttpRequest(endpoint, Method.Post, Creds);
         
         if (input.Headers != null)
         {
             var headers = ConvertToDictionary<string>(input.Headers);
             request.AddHeaders(headers);
         }
+
+        ApplyRequestPayload(request, input.ContentType, input.Body, input.IsBodyInJsonFormat);
 
         if (input.File != null)
         {
@@ -185,6 +187,37 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     
         var response = await client.ExecuteWithErrorHandling(request);
         return new ResponseDto(response);
+    }
+    
+    private static void ApplyRequestPayload(HttpRequest request, string? contentType, string body, bool isBodyInJsonFormat)
+    {
+        switch (contentType)
+        {
+            case "application/x-www-form-urlencoded":
+            case "multipart/form-data":
+                // Form parameters: add body fields as parameters
+                if (!string.IsNullOrWhiteSpace(body))
+                {
+                    if (isBodyInJsonFormat)
+                    {
+                        var bodyFields = ConvertToDictionary<object>(body);
+                        foreach (var field in bodyFields)
+                        {
+                            request.AddParameter(field.Key, field.Value, ParameterType.GetOrPost);
+                        }
+                    }
+                    else
+                    {
+                        request.AddParameter("body", body, ParameterType.GetOrPost);
+                    }
+                }
+                break;
+            
+            default:
+                // Default: application/json or null (backward compatibility)
+                request.AddJsonBody(body);
+                break;
+        }
     }
     
     private static Dictionary<string, TValue> ConvertToDictionary<TValue>(string json) 

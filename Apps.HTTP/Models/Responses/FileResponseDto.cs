@@ -9,50 +9,33 @@ namespace Apps.HTTP.Models.Responses;
 
 public class FileResponseDto : ResponseDto
 {
-    public FileResponseDto(RestResponse response, IFileManagementClient fileManagementClient) : base(response)
-    {
-        string? contentTypeHeader = response.ContentHeaders?.FirstOrDefault(x => x.Name == "Content-Type")?.Value?.ToString();
-        string contentType = GetContentType(contentTypeHeader);
-
-        string? contentDispositionHeader = response.ContentHeaders?.FirstOrDefault(h => h.Name == "Content-Disposition")?.Value?.ToString();
-        string fileName = GetFileName(contentDispositionHeader);
-        fileName = EnsureFileExtension(fileName, contentType);
-
-        using var stream = new MemoryStream(response.RawBytes);
-        ContentFile = fileManagementClient.UploadAsync(stream, contentType, fileName).Result;
-    }
-
-    private FileResponseDto(RestResponse response) : base(response)
-    {
-    }
+    private FileResponseDto(RestResponse response) : base(response) { }
 
     [Display("Content file")]
     public FileReference ContentFile { get; set; }
 
-    public static async Task<FileResponseDto> FromStreamAsync(
-        RestResponse meta,
-        Stream contentStream,
-        IFileManagementClient fileManagementClient)
+    public static async Task<FileResponseDto> FromResponseAsync(RestResponse response, IFileManagementClient fileManagementClient)
     {
-        var dto = new FileResponseDto(meta);
+        var dto = new FileResponseDto(response);
 
-        var contentTypeHeader = meta.ContentHeaders?
+        var contentTypeHeader = response.ContentHeaders?
             .FirstOrDefault(x => x.Name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
             ?.Value?.ToString();
 
-        var contentType = NormalizeContentType(contentTypeHeader);
+        var contentType = GetContentType(contentTypeHeader);
 
-        var contentDispositionHeader = meta.ContentHeaders?
+        var contentDispositionHeader = response.ContentHeaders?
             .FirstOrDefault(h => h.Name.Equals("Content-Disposition", StringComparison.OrdinalIgnoreCase))
             ?.Value?.ToString();
 
-        var fileName = GetFileNameFromContentDisposition(contentDispositionHeader);
+        var fileName = GetFileName(contentDispositionHeader);
 
-        if (string.IsNullOrWhiteSpace(fileName))
-            fileName = GetFileNameFromUri(meta.ResponseUri);
-
-        if (string.IsNullOrWhiteSpace(fileName))
-            fileName = Guid.NewGuid().ToString();
+        if (string.IsNullOrWhiteSpace(contentDispositionHeader) || !contentDispositionHeader.Contains("attachment", StringComparison.OrdinalIgnoreCase))
+        {
+            var fromUrl = GetFileNameFromUri(response.ResponseUri);
+            if (!string.IsNullOrWhiteSpace(fromUrl))
+                fileName = fromUrl;
+        }
 
         if (IsOctetStream(contentType))
         {
@@ -63,7 +46,9 @@ public class FileResponseDto : ResponseDto
 
         fileName = EnsureFileExtension(fileName, contentType);
 
-        dto.ContentFile = await fileManagementClient.UploadAsync(contentStream, contentType, fileName);
+        using var stream = new MemoryStream(response.RawBytes ?? Array.Empty<byte>());
+        dto.ContentFile = await fileManagementClient.UploadAsync(stream, contentType, fileName);
+
         return dto;
     }
 
@@ -79,9 +64,13 @@ public class FileResponseDto : ResponseDto
         return MediaTypeNames.Application.Octet;
     }
 
+    private static bool IsOctetStream(string contentType) =>
+        contentType.Equals(MediaTypeNames.Application.Octet, StringComparison.OrdinalIgnoreCase);
+
     private static string GetFileName(string? contentDispositionHeader)
     {
-        if (!string.IsNullOrEmpty(contentDispositionHeader) && contentDispositionHeader.Contains("attachment"))
+        if (!string.IsNullOrEmpty(contentDispositionHeader) &&
+            contentDispositionHeader.Contains("attachment", StringComparison.OrdinalIgnoreCase))
         {
             var quoteStart = contentDispositionHeader.IndexOf('"');
             var quoteEnd = quoteStart >= 0 ? contentDispositionHeader.IndexOf('"', quoteStart + 1) : -1;
@@ -90,36 +79,9 @@ public class FileResponseDto : ResponseDto
                 ? contentDispositionHeader.Substring(quoteStart + 1, quoteEnd - quoteStart - 1)
                 : Guid.NewGuid().ToString();
         }
-        else
-        {
-            return Guid.NewGuid().ToString();
-        }
+
+        return Guid.NewGuid().ToString();
     }
-
-    private static string EnsureFileExtension(string fileName, string contentType)
-    {
-        var parts = contentType.Split('/');
-        if (parts.Length == 2)
-        {
-            var ext = parts[1].Trim();
-            if (!fileName.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase) && ext.ToLower() != "octet-stream")
-                fileName += "." + ext;
-        }
-
-        return fileName;
-    }
-
-    private static string NormalizeContentType(string? header)
-    {
-        if (string.IsNullOrWhiteSpace(header))
-            return MediaTypeNames.Application.Octet;
-
-        var parts = header.Split(';', StringSplitOptions.RemoveEmptyEntries);
-        return parts.Length > 0 ? parts[0].Trim() : MediaTypeNames.Application.Octet;
-    }
-
-    private static bool IsOctetStream(string contentType) =>
-        contentType.Equals(MediaTypeNames.Application.Octet, StringComparison.OrdinalIgnoreCase);
 
     private static string? GetFileNameFromUri(Uri? uri)
     {
@@ -129,26 +91,30 @@ public class FileResponseDto : ResponseDto
         return Uri.UnescapeDataString(last);
     }
 
-    private static string? GetFileNameFromContentDisposition(string? cd)
-    {
-        if (string.IsNullOrWhiteSpace(cd)) return null;
-
-        if (!cd.Contains("attachment", StringComparison.OrdinalIgnoreCase)) return null;
-
-        var quoteStart = cd.IndexOf('"');
-        var quoteEnd = quoteStart >= 0 ? cd.IndexOf('"', quoteStart + 1) : -1;
-
-        if (quoteStart >= 0 && quoteEnd > quoteStart)
-            return cd.Substring(quoteStart + 1, quoteEnd - quoteStart - 1);
-
-        return null;
-    }
-
     private static string? InferContentTypeFromFileName(string fileName)
     {
         if (!Path.HasExtension(fileName)) return null;
 
         var provider = new FileExtensionContentTypeProvider();
         return provider.TryGetContentType(fileName, out var ct) ? ct : null;
+    }
+
+    private static string EnsureFileExtension(string fileName, string contentType)
+    {
+        if (Path.HasExtension(fileName))
+            return fileName;
+
+        if (IsOctetStream(contentType))
+            return fileName;
+
+        var parts = contentType.Split('/');
+        if (parts.Length == 2)
+        {
+            var ext = parts[1].Trim();
+            if (!string.IsNullOrWhiteSpace(ext))
+                fileName += "." + ext;
+        }
+
+        return fileName;
     }
 }

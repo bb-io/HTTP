@@ -41,17 +41,16 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
         return restResponse;
     }
 
-    public async Task<(Stream Stream, RestResponse Meta)> ExecuteForFileDownloadStreamAsync(RestRequest request)
+    public async Task<RestResponse> ExecuteForFileDownloadAsync(RestRequest request)
     {
-        var meta = await ExecuteAsync(request);
-        if (!meta.IsSuccessStatusCode)
-            throw ConfigureErrorException(meta);
+        RestResponse response = await ExecuteAsync(request);
 
-        var stream = await DownloadStreamAsync(request);
-        if (stream == null)
-            throw new PluginApplicationException("Failed to download file stream (empty response stream).");
+        if (!response.IsSuccessStatusCode)
+        {
+            throw ConfigureErrorException(response);
+        }
 
-        return (stream, meta);
+        return response;
     }
 
     protected override Exception ConfigureErrorException(RestResponse response)

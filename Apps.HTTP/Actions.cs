@@ -53,9 +53,10 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
+
         var endpoint = "/" + input.Endpoint.Trim('/');
         if (input.QueryParameters != null)
-        { 
+        {
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
             endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
         }
@@ -67,12 +68,9 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             request.AddHeaders(headers);
         }
 
-        var (stream, meta) = await client.ExecuteForFileDownloadStreamAsync(request);
+        var response = await client.ExecuteForFileDownloadAsync(request);
 
-        await using (stream)
-        {
-            return await FileResponseDto.FromStreamAsync(meta, stream, fileManagementClient);
-        }
+        return await FileResponseDto.FromResponseAsync(response, fileManagementClient);
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]

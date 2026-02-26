@@ -41,6 +41,19 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
         return restResponse;
     }
 
+    public async Task<(Stream Stream, RestResponse Meta)> ExecuteForFileDownloadStreamAsync(RestRequest request)
+    {
+        var meta = await ExecuteAsync(request);
+        if (!meta.IsSuccessStatusCode)
+            throw ConfigureErrorException(meta);
+
+        var stream = await DownloadStreamAsync(request);
+        if (stream == null)
+            throw new PluginApplicationException("Failed to download file stream (empty response stream).");
+
+        return (stream, meta);
+    }
+
     protected override Exception ConfigureErrorException(RestResponse response)
     {
         return new PluginApplicationException(response.ErrorMessage ?? response.Content ?? $"An error occurred. Status code: {response.StatusCode}");

@@ -86,8 +86,8 @@ public class ActionsTests : TestBase
         var actions = new Actions(InvocationContext, FileManager);
         var request = new GetRequest
         {
-            Endpoint = "/response-headers",
-            QueryParameters = "{ \"Content-Disposition\": \"attachment; filename=\\\"document.txt\\\"\" }"
+            Endpoint = "689ba8788eda3b8caf9dcd9d/orders/699888970ad118ac31441a56/videos/file_1771603790527_en_subtitled.mp4",
+            
         };
 
         // Act
@@ -96,8 +96,6 @@ public class ActionsTests : TestBase
         // Assert
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.StatusCode);
-
-        Console.WriteLine(JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = true }));
     }
 
     [TestMethod]

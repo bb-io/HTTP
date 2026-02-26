@@ -67,8 +67,12 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             request.AddHeaders(headers);
         }
 
-        var response = await client.ExecuteWithErrorHandling(request);
-        return new FileResponseDto(response, fileManagementClient);
+        var (stream, meta) = await client.ExecuteForFileDownloadStreamAsync(request);
+
+        await using (stream)
+        {
+            return await FileResponseDto.FromStreamAsync(meta, stream, fileManagementClient);
+        }
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]

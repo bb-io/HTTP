@@ -1,4 +1,5 @@
-﻿using Apps.HTTP.Models.Requests;
+﻿using Apps.HTTP.Constants;
+using Apps.HTTP.Models.Requests;
 using Apps.HTTP.Models.Responses;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
@@ -6,11 +7,14 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System.Net.Http.Headers;
+using System.Net.Mime;
 
 namespace Apps.HTTP;
 
@@ -52,27 +56,91 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
-        var client = new HttpClient(Creds);
+        var baseUrl = Creds.Get(CredNames.BaseUrl).Value?.TrimEnd('/')
+                 ?? throw new PluginMisconfigurationException("Base URL is missing.");
 
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = input.Endpoint?.Trim() ?? "";
+        endpoint = endpoint.StartsWith("/") ? endpoint : "/" + endpoint;
+
+        var url = baseUrl + endpoint;
+
         if (input.QueryParameters != null)
         {
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
-            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+            url = QueryHelpers.AddQueryString(url, queryParameters);
         }
 
-        var request = new HttpRequest(endpoint, Method.Get, Creds);
+        using var httpClient = new System.Net.Http.HttpClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
         if (input.Headers != null)
         {
             var headers = ConvertToDictionary<string>(input.Headers);
-            request.AddHeaders(headers);
+            foreach (var (key, value) in headers)
+            {
+                request.Headers.TryAddWithoutValidation(key, value);
+            }
         }
 
-        var response = await client.ExecuteForFileDownloadAsync(request);
+        using var response = await httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            CancellationToken.None);
 
-        return await FileResponseDto.FromResponseAsync(response, fileManagementClient);
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = response.Content != null
+                ? await response.Content.ReadAsStringAsync(CancellationToken.None)
+                : null;
+
+            throw new PluginApplicationException(body ?? $"Request failed. Status code: {(int)response.StatusCode} {response.ReasonPhrase}");
+        }
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? MediaTypeNames.Application.Octet;
+
+        var fileName = GetFileNameFromContentDisposition(response.Content.Headers.ContentDisposition)
+                       ?? Guid.NewGuid().ToString();
+
+        fileName = EnsureFileExtension(fileName, contentType);
+
+        await using var responseStream = await response.Content.ReadAsStreamAsync(CancellationToken.None);
+
+        var uploaded = await fileManagementClient.UploadAsync(responseStream, contentType, fileName);
+
+        return new FileResponseDto
+        {
+            ContentFile = uploaded,
+            ContentType = contentType,
+            FileName = fileName
+        };
     }
-    
+
+    private static string? GetFileNameFromContentDisposition(ContentDispositionHeaderValue? cd)
+    {
+
+        if (cd == null) return null;
+
+        var fileNameStar = cd.FileNameStar?.Trim('"');
+        if (!string.IsNullOrWhiteSpace(fileNameStar))
+            return Uri.UnescapeDataString(fileNameStar);
+
+        var fileName = cd.FileName?.Trim('"');
+        return string.IsNullOrWhiteSpace(fileName) ? null : fileName;
+    }
+
+    private static string EnsureFileExtension(string fileName, string contentType)
+    {
+        var parts = contentType.Split('/');
+        if (parts.Length == 2)
+        {
+            var ext = parts[1].Trim();
+            if (!fileName.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase) && ext.ToLower() != "octet-stream")
+                fileName += "." + ext;
+        }
+        return fileName;
+    }
+
+
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]
     public async Task<ResponseDto> Post([ActionParameter] PostRequest input)
     {

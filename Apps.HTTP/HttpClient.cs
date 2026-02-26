@@ -41,18 +41,6 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
         return restResponse;
     }
 
-    public async Task<RestResponse> ExecuteForFileDownloadAsync(RestRequest request)
-    {
-        RestResponse response = await ExecuteAsync(request);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            throw ConfigureErrorException(response);
-        }
-
-        return response;
-    }
-
     protected override Exception ConfigureErrorException(RestResponse response)
     {
         return new PluginApplicationException(response.ErrorMessage ?? response.Content ?? $"An error occurred. Status code: {response.StatusCode}");

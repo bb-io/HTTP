@@ -6,63 +6,21 @@ using RestSharp;
 
 namespace Apps.HTTP.Models.Responses;
 
-public class FileResponseDto : ResponseDto
+public class FileResponseDto
 {
-    public FileResponseDto(RestResponse response, IFileManagementClient fileManagementClient) : base(response)
+    public FileResponseDto(FileReference contentFile, string contentType, string fileName)
     {
-        string? contentTypeHeader = response.ContentHeaders?.FirstOrDefault(x => x.Name == "Content-Type")?.Value?.ToString();
-        string contentType = GetContentType(contentTypeHeader);
-
-        string? contentDispositionHeader = response.ContentHeaders?.FirstOrDefault(h => h.Name == "Content-Disposition")?.Value?.ToString();
-        string fileName = GetFileName(contentDispositionHeader);
-        fileName = EnsureFileExtension(fileName, contentType);
-
-        using var stream = new MemoryStream(response.RawBytes);
-        ContentFile = fileManagementClient.UploadAsync(stream, contentType, fileName).Result;
+        ContentFile = contentFile;
+        ContentType = contentType;
+        FileName = fileName;
     }
-    
+
     [Display("Content file")]
     public FileReference ContentFile { get; set; }
 
-    private static string GetContentType(string? contentTypeHeader)
-    {
-        if (!string.IsNullOrWhiteSpace(contentTypeHeader))
-        {
-            var parts = contentTypeHeader.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length > 0)
-                return parts[0].Trim();
-        }
+    [Display("Content type")]
+    public string ContentType { get; set; }
 
-        return MediaTypeNames.Application.Octet;
-    }
-
-    private static string GetFileName(string? contentDispositionHeader)
-    {
-        if (!string.IsNullOrEmpty(contentDispositionHeader) && contentDispositionHeader.Contains("attachment"))
-        {
-            var quoteStart = contentDispositionHeader.IndexOf('"');
-            var quoteEnd = quoteStart >= 0 ? contentDispositionHeader.IndexOf('"', quoteStart + 1) : -1;
-
-            return (quoteStart >= 0 && quoteEnd > quoteStart)
-                ? contentDispositionHeader.Substring(quoteStart + 1, quoteEnd - quoteStart - 1)
-                : Guid.NewGuid().ToString();
-        }
-        else
-        {
-            return Guid.NewGuid().ToString();
-        }
-    }
-
-    private static string EnsureFileExtension(string fileName, string contentType)
-    {
-        var parts = contentType.Split('/');
-        if (parts.Length == 2)
-        {
-            var ext = parts[1].Trim();
-            if (!fileName.EndsWith("." + ext, StringComparison.OrdinalIgnoreCase) && ext.ToLower() != "octet-stream")
-                fileName += "." + ext;
-        }
-
-        return fileName;
-    }
+    [Display("File name")]
+    public string FileName { get; set; }
 }

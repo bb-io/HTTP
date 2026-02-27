@@ -1,16 +1,20 @@
-﻿using Apps.HTTP.Models.Requests;
+﻿using Apps.HTTP.Constants;
+using Apps.HTTP.Models.Requests;
 using Apps.HTTP.Models.Responses;
+using Apps.HTTP.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
+using System.Net.Mime;
 
 namespace Apps.HTTP;
 
@@ -52,23 +56,65 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidHeaders(input.Headers);
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
-        var client = new HttpClient(Creds);
+        var baseUrl = Creds.Get(CredNames.BaseUrl).Value.TrimEnd('/');
         var endpoint = "/" + input.Endpoint.Trim('/');
+
         if (input.QueryParameters != null)
-        { 
-            var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
-            endpoint = QueryHelpers.AddQueryString(endpoint, queryParameters);
+        {
+            var qp = ConvertToDictionary<string>(input.QueryParameters);
+            endpoint = QueryHelpers.AddQueryString(endpoint, qp);
         }
 
-        var request = new HttpRequest(endpoint, Method.Get, Creds);
+        var requestUri = new Uri(new Uri(baseUrl + "/"), endpoint.TrimStart('/'));
+
+        using var http = new System.Net.Http.HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
+        using var req = new HttpRequestMessage(HttpMethod.Get, requestUri);
+
         if (input.Headers != null)
         {
             var headers = ConvertToDictionary<string>(input.Headers);
-            request.AddHeaders(headers);
+            foreach (var (key, value) in headers)
+            {
+                if (!req.Headers.TryAddWithoutValidation(key, value))
+                {
+                    req.Content ??= new ByteArrayContent(Array.Empty<byte>());
+                    req.Content.Headers.TryAddWithoutValidation(key, value);
+                }
+            }
         }
 
-        var response = await client.ExecuteWithErrorHandling(request);
-        return new FileResponseDto(response, fileManagementClient);
+        using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None);
+        resp.EnsureSuccessStatusCode();
+
+        var contentTypeHeader = resp.Content.Headers.ContentType?.ToString();
+        var contentType = HttpFileHelpers.NormalizeContentType(contentTypeHeader);
+
+        var responseUrl = resp.RequestMessage?.RequestUri;
+
+        var cd = HttpFileHelpers.GetHeaderValue(resp, "Content-Disposition");
+        var fileName =
+            HttpFileHelpers.TryGetFileNameFromContentDisposition(cd)
+            ?? HttpFileHelpers.TryGetFileNameFromUrl(responseUrl)
+            ?? HttpFileHelpers.MakeFallbackName();
+
+        if (HttpFileHelpers.IsOctetStream(contentType))
+        {
+            var ext = HttpFileHelpers.TryGetExtFromUrl(responseUrl);
+            if (!string.IsNullOrWhiteSpace(ext))
+                fileName = HttpFileHelpers.EnsureExtension(fileName, ext!);
+        }
+
+        await using var netStream = await resp.Content.ReadAsStreamAsync(CancellationToken.None);
+
+        await using var ms = new MemoryStream(
+            capacity: resp.Content.Headers.ContentLength is long len && len > 0 && len < int.MaxValue ? (int)len : 0);
+
+        await netStream.CopyToAsync(ms, 81920, CancellationToken.None);
+        ms.Position = 0;
+
+        var uploaded = await fileManagementClient.UploadAsync(ms, contentType, fileName);
+
+        return new FileResponseDto(uploaded, contentType, fileName);
     }
     
     [Action("Post", Description = "Perform a POST request to the specified endpoint.")]

@@ -41,6 +41,23 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
         return restResponse;
     }
 
+    public async Task<Stream> GetFileStreamAsync(RestRequest request)
+    {
+        var stream = await this.DownloadStreamAsync(request);
+
+        if (stream == null)
+        {
+            throw new PluginApplicationException("Could not retrieve file stream from the source.");
+        }
+
+        return stream;
+    }
+
+    public async Task<RestResponse> GetFileMetadataAsync(RestRequest request)
+    {
+        return await this.ExecuteAsync(request);
+    }
+
     protected override Exception ConfigureErrorException(RestResponse response)
     {
         return new PluginApplicationException(response.ErrorMessage ?? response.Content ?? $"An error occurred. Status code: {response.StatusCode}");

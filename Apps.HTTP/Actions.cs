@@ -32,7 +32,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -57,7 +57,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var baseUrl = Creds.Get(CredNames.BaseUrl).Value.TrimEnd('/');
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
 
         if (input.QueryParameters != null)
         {
@@ -125,7 +125,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
         var request = new HttpRequest(endpoint, Method.Post, Creds);
         
         if (input.Headers != null)
@@ -161,7 +161,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -190,7 +190,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             CheckIfValidJson(input.Body, "Request body");
         
         var client = new HttpClient(Creds);
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -217,7 +217,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         CheckIfValidJson(input.QueryParameters, "Query parameters");
 
         var client = new HttpClient(Creds);
-        var endpoint = "/" + input.Endpoint.Trim('/');
+        var endpoint = ValidateAndNormalizeEndpoint(input.Endpoint);
         if (input.QueryParameters != null)
         { 
             var queryParameters = ConvertToDictionary<string>(input.QueryParameters);
@@ -268,6 +268,24 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
     
     private static Dictionary<string, TValue> ConvertToDictionary<TValue>(string json) 
         => JsonConvert.DeserializeObject<Dictionary<string, TValue>>(json);
+
+    private static string ValidateAndNormalizeEndpoint(string? endpoint)
+    {
+        if (string.IsNullOrWhiteSpace(endpoint))
+            throw new PluginMisconfigurationException("Endpoint is required and must be a relative path, for example /sync-translated.");
+
+        var trimmedEndpoint = endpoint.Trim();
+        if (Uri.TryCreate(trimmedEndpoint, UriKind.Absolute, out _))
+        {
+            throw new PluginMisconfigurationException(
+                $"Endpoint must be a relative path because the domain is already configured in Base URL. Use /{trimmedEndpoint.Trim('/').Split('/').LastOrDefault()} or another relative path instead of {trimmedEndpoint}.");
+        }
+
+        if (!Uri.TryCreate(trimmedEndpoint, UriKind.Relative, out _))
+            throw new PluginMisconfigurationException("Endpoint must be a valid relative path, for example /sync-translated.");
+
+        return "/" + trimmedEndpoint.Trim('/');
+    }
     
     private static void CheckIfValidJson(string? json, string parameterName)
     {

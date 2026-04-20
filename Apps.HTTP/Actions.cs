@@ -275,14 +275,14 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             throw new PluginMisconfigurationException("Endpoint is required and must be a relative path, for example /sync-translated.");
 
         var trimmedEndpoint = endpoint.Trim();
-        if (Uri.TryCreate(trimmedEndpoint, UriKind.Absolute, out _))
+        if (Uri.TryCreate(trimmedEndpoint, UriKind.Absolute, out var uri) && 
+            (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
         {
             throw new PluginMisconfigurationException(
-                $"Endpoint must be a relative path because the domain is already configured in Base URL. Use /{trimmedEndpoint.Trim('/').Split('/').LastOrDefault()} or another relative path instead of {trimmedEndpoint}.");
+                $"Endpoint must be a relative path because the domain is already configured in Base URL. " +
+                $"Use /{trimmedEndpoint.Trim('/').Split('/').LastOrDefault()} " +
+                $"or another relative path instead of {trimmedEndpoint}.");
         }
-
-        if (!Uri.TryCreate(trimmedEndpoint, UriKind.Relative, out _))
-            throw new PluginMisconfigurationException("Endpoint must be a valid relative path, for example /sync-translated.");
 
         return "/" + trimmedEndpoint.Trim('/');
     }

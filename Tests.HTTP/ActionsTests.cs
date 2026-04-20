@@ -147,7 +147,7 @@ public class ActionsTests : TestBase
         var action = new Actions(InvocationContext, FileManager);
         var input = new GetRequest
         {
-            Endpoint = "test",
+            Endpoint = "/WorkflowInstances/callback/019cb519-1a70-7e4a-b1f6-be8494b53310",
         };
 
         // Act

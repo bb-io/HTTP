@@ -141,6 +141,24 @@ public class ActionsTests : TestBase
     }
 
     [TestMethod]
+    public async Task Get_CorrectRequest_ReturnsResponseDto()
+    {
+        // Arrange
+        var action = new Actions(InvocationContext, FileManager);
+        var input = new GetRequest
+        {
+            Endpoint = "test",
+        };
+
+        // Act
+        var result = await action.Get(input);
+
+        // Assert
+        Console.WriteLine(result.Content);
+        Assert.IsNotNull(result);
+    }
+
+    [TestMethod]
     public async Task Get_IncorrectHeaderJson_ThrowsMisconfigurationException()
     {
         // Arrange

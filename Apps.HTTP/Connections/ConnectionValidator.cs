@@ -15,56 +15,26 @@ public class ConnectionValidator : IConnectionValidator
         CancellationToken cancellationToken)
     {
         var creds = authenticationCredentialsProviders as AuthenticationCredentialsProvider[]
-           ?? authenticationCredentialsProviders.ToArray();
-
-        var raw = creds.Get(CredNames.BaseUrl).Value?.Trim();
-
-        if (string.IsNullOrWhiteSpace(raw))
-        {
-            return new ConnectionValidationResponse
-            {
-                IsValid = false,
-                Message = "Base URL is empty"
-            };
-        }
+                    ?? authenticationCredentialsProviders.ToArray();
 
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            var client = new HttpClient(creds);
+            string host = client.Options.BaseUrl!.Host;
 
-            var host = new UriBuilder(raw.Contains("://") ? raw : $"http://{raw}").Host;
-
-            if (string.IsNullOrWhiteSpace(host))
-            {
-                return new ConnectionValidationResponse
-                {
-                    IsValid = false,
-                    Message = "Invalid URL"
-                };
-            }
-
-            var addresses = await Dns.GetHostAddressesAsync(host);
-
+            var addresses = await Dns.GetHostAddressesAsync(host, cancellationToken);
             return new ConnectionValidationResponse
             {
                 IsValid = addresses.Length > 0,
                 Message = addresses.Length > 0 ? "Success" : "Ping failed"
             };
         }
-        catch (UriFormatException)
+        catch (Exception ex)
         {
             return new ConnectionValidationResponse
             {
                 IsValid = false,
-                Message = "Invalid URL"
-            };
-        }
-        catch (SocketException)
-        {
-            return new ConnectionValidationResponse
-            {
-                IsValid = false,
-                Message = "Ping failed. No such host is known"
+                Message = ex.Message
             };
         }
     }

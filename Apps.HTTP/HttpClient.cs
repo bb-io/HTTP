@@ -14,8 +14,15 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
 {
     private static Uri GetBaseUrl(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
     {
-        var baseUrl = authenticationCredentialsProviders.Get(CredNames.BaseUrl).Value;
-        return new(baseUrl);
+        var rawUrl = authenticationCredentialsProviders.Get(CredNames.BaseUrl)?.Value;
+        if (string.IsNullOrWhiteSpace(rawUrl))
+            throw new PluginMisconfigurationException("Base URL is missing. Please check your connection");
+
+        var urlString = rawUrl.Contains("://") ? rawUrl : $"https://{rawUrl}";
+        if (!Uri.TryCreate(urlString, UriKind.Absolute, out var validatedUri))
+            throw new PluginMisconfigurationException($"The Base URL '{rawUrl}' is invalid. Please provide a valid domain or URL.");
+
+        return validatedUri;
     }
 
     public override async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)

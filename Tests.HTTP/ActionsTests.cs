@@ -178,4 +178,51 @@ public class ActionsTests : TestBase
         // Assert
         StringAssert.Contains(ex.Message, "Invalid headers JSON");
     }
+
+    [TestMethod]
+    public async Task Get_ExcessivelyLongEndpoint_ThrowsMisconfigurationException()
+    {
+        var action = new Actions(InvocationContext, FileManager);
+        var input = new GetRequest
+        {
+            Endpoint = "/" + new string('a', 100_000)
+        };
+
+        var ex = await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(() => action.Get(input));
+
+        StringAssert.Contains(ex.Message, "Request URL is too long");
+        StringAssert.Contains(ex.Message, "query parameter values");
+    }
+
+    [TestMethod]
+    public async Task Get_ExcessivelyLongQueryParameter_ThrowsMisconfigurationException()
+    {
+        var action = new Actions(InvocationContext, FileManager);
+        var input = new GetRequest
+        {
+            Endpoint = "/get",
+            QueryParameters = JsonSerializer.Serialize(new Dictionary<string, string>
+            {
+                ["payload"] = new string('a', 100_000)
+            })
+        };
+
+        var ex = await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(() => action.Get(input));
+
+        StringAssert.Contains(ex.Message, "Request URL is too long");
+    }
+
+    [TestMethod]
+    public async Task GetFile_ExcessivelyLongEndpoint_ThrowsMisconfigurationException()
+    {
+        var action = new Actions(InvocationContext, FileManager);
+        var input = new GetRequest
+        {
+            Endpoint = "/" + new string('a', 100_000)
+        };
+
+        var ex = await Assert.ThrowsExceptionAsync<PluginMisconfigurationException>(() => action.GetFile(input));
+
+        StringAssert.Contains(ex.Message, "Request URL is too long");
+    }
 }

@@ -1,4 +1,5 @@
 ﻿using Apps.HTTP.Constants;
+using Apps.HTTP.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
@@ -39,7 +40,18 @@ public class HttpClient(IEnumerable<AuthenticationCredentialsProvider> authentic
 
     public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
-        RestResponse restResponse = await ExecuteAsync(request);
+        RequestUriValidator.Create(Options.BaseUrl!, request.Resource);
+
+        RestResponse restResponse;
+        try
+        {
+            restResponse = await ExecuteAsync(request);
+        }
+        catch (UriFormatException exception)
+        {
+            throw RequestUriValidator.CreateMisconfigurationException(exception);
+        }
+
         if (!restResponse.IsSuccessStatusCode)
         {
             throw ConfigureErrorException(restResponse);

@@ -65,7 +65,7 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
             endpoint = QueryHelpers.AddQueryString(endpoint, qp);
         }
 
-        var requestUri = new Uri(new Uri(baseUrl + "/"), endpoint.TrimStart('/'));
+        var requestUri = RequestUriValidator.Create(new Uri(baseUrl + "/"), endpoint.TrimStart('/'));
 
         using var http = new System.Net.Http.HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
         using var req = new HttpRequestMessage(HttpMethod.Get, requestUri);

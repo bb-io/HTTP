@@ -14,7 +14,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
-using System.Net.Mime;
 
 namespace Apps.HTTP;
 
@@ -84,7 +83,8 @@ public class Actions(InvocationContext invocationContext, IFileManagementClient 
         }
 
         using var resp = await http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, CancellationToken.None);
-        resp.EnsureSuccessStatusCode();
+        if (!resp.IsSuccessStatusCode)
+            throw new PluginApplicationException($"Request failed with status code {(int)resp.StatusCode} ({resp.ReasonPhrase}).");
 
         var contentTypeHeader = resp.Content.Headers.ContentType?.ToString();
         var contentType = HttpFileHelpers.NormalizeContentType(contentTypeHeader);
